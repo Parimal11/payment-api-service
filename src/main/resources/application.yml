@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/payflow?options=-c%20TimeZone=UTC
+    username: ${DB_USER:admin}
+    password: ${DB_PASS:admin@123}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+  sql:
+    init:
+      mode: always
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics, prometheus
+
+logging:
+  pattern:
+    level: "%5p [CID:%X{correlationId}]"
+
+server:
+  port: 9090
