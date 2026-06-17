@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import com.payflow.api.exception.IdempotencyKeyMissingException;
 
 import jakarta.validation.Valid;
 
@@ -25,7 +26,7 @@ public class PaymentController {
             @Valid @RequestBody PaymentRequest request) {
 
         if (key == null || key.isBlank()) {
-            throw new RuntimeException("Idempotency-Key header is required");
+            throw new IdempotencyKeyMissingException("Idempotency-Key header is required");
         }
 
         boolean exists = service.existsByKey(key);
@@ -49,7 +50,8 @@ public class PaymentController {
                 tx.getId(),
                 tx.getUserId(),
                 tx.getAmount(),
-                tx.getStatus()
+                tx.getStatus(),
+                tx.getCurrency()
         );
 
         return ResponseEntity.ok(
@@ -70,7 +72,8 @@ public class PaymentController {
                         tx.getId(),
                         tx.getUserId(),
                         tx.getAmount(),
-                        tx.getStatus()
+                        tx.getStatus(),
+                        tx.getCurrency()
                 ))
                 .toList();
 

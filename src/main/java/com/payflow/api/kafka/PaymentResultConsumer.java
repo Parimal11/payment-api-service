@@ -17,21 +17,14 @@ public class PaymentResultConsumer {
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "payment-results", groupId = "payment-api-group")
-    public void consume(String message) {
+    public void consume(String message) throws Exception{
 
         log.info("Received payment result event: {}", message);
 
-        try {
-            PaymentResultEvent event =
-                    objectMapper.readValue(message, PaymentResultEvent.class);
+       PaymentResultEvent event = objectMapper.readValue(message, PaymentResultEvent.class);
+        
 
-            Long transactionId = event.getTransactionId();
-            Status status = Status.valueOf(event.getStatus());
-
-            service.updateTransactionStatus(transactionId, status);
-
-        } catch (Exception e) {
-            log.error("Error processing payment result event", e);
-        }
+        Status status = Status.valueOf(event.getStatus());
+        service.updateTransactionStatus(event.getTransactionId(), status);
     }
 }

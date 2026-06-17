@@ -3,6 +3,9 @@ package com.payflow.api.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.Instant;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "transactions",
@@ -23,11 +26,18 @@ public class Transaction {
     @Column(nullable = false)
     private Long amount;
 
+    @Column(nullable = false, length = 3)
+    private String currency;
+
     @Enumerated(EnumType.STRING)
     private Status status;
 
     @Column(name = "created_at")
     private Instant createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    private Instant updatedAt;
 
     @Version
     private Long version;

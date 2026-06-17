@@ -12,4 +12,5 @@ public class TransactionResponse {
     private Long userId;
     private Long amount;
     private Status status;
+    private String currency;
 }
