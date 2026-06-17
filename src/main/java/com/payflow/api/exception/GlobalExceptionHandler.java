@@ -11,6 +11,14 @@ import java.time.Instant;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(IdempotencyKeyMissingException.class)
+    public ResponseEntity<ErrorResponse> handleMissingKey(
+            IdempotencyKeyMissingException ex,
+            HttpServletRequest request) {
+
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(TransactionNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(
             TransactionNotFoundException ex,

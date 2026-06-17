@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Optional;
 
+import com.payflow.api.exception.TransactionNotFoundException;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,6 +31,8 @@ public class PaymentService {
 
     private final ObjectMapper objectMapper;
 
+    
+
     public boolean existsByKey(String key) {
         return repo.findByIdempotencyKey(key).isPresent();
     }
@@ -36,11 +40,11 @@ public class PaymentService {
     @Transactional
     public PaymentResponse createPayment(String key, PaymentRequest request) {
 
-        Optional<Transaction> existing =
-                repo.findByIdempotencyKey(key);
+        Optional<Transaction> existing = repo.findByIdempotencyKey(key);
 
         if (existing.isPresent()) {
             Transaction tx = existing.get();
+            
             return new PaymentResponse(tx.getId(), tx.getStatus(), tx.getAmount());
         }
 
@@ -48,6 +52,7 @@ public class PaymentService {
         tx.setIdempotencyKey(key);
         tx.setUserId(request.getUserId());
         tx.setAmount(request.getAmount());
+        tx.setCurrency(request.getCurrency());
         tx.setStatus(Status.PENDING);
         tx.setCreatedAt(Instant.now());
 
@@ -55,7 +60,7 @@ public class PaymentService {
 
         try {
             PaymentRequestEvent event =
-                    new PaymentRequestEvent(tx.getId(), tx.getUserId(), tx.getAmount());
+                    new PaymentRequestEvent(tx.getId(), tx.getUserId(), tx.getAmount(), tx.getCurrency());
 
             String payload = objectMapper.writeValueAsString(event);
 
@@ -77,7 +82,7 @@ public class PaymentService {
     }
     public Transaction getTransaction(Long id) {
         return repo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found:" + id));
     }
 
     public Page<Transaction> list(Long userId, int page, int size) {
@@ -89,11 +94,13 @@ public class PaymentService {
     public void updateTransactionStatus(Long transactionId, Status status) {
 
         Transaction tx = repo.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found:" + transactionId));
 
         // Idempotency for consumer
-        if (tx.getStatus() == Status.SUCCESS) {
+        if(tx.getStatus() == Status.SUCCESS || tx.getStatus() == Status.FAILED) {
+            log.info("Skipping status update for terminal tx={}, current status={}",  transactionId, tx.getStatus());
             return;
+            
         }
 
         tx.setStatus(status);

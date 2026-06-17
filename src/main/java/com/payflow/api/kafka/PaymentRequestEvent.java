@@ -9,4 +9,5 @@ public class PaymentRequestEvent {
     private Long transactionId;
     private Long userId;
     private Long amount;
+    private String currency;
 }
